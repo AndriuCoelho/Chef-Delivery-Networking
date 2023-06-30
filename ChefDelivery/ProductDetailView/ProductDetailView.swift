@@ -12,6 +12,12 @@ struct ProductDetailView: View {
     let product: ProductType
     @State private var productQuantity = 1
     
+    @StateObject private var service = HomeService()
+    
+    @State private var showAlert = false
+    
+    @Environment(\.presentationMode) var presentationMode
+    
     var body: some View {
         VStack {
 
@@ -21,11 +27,40 @@ struct ProductDetailView: View {
             
             ProductDetailQuantityView(productQuantity: $productQuantity)
             
-            //Text("\(productQuantity)")
-            
             Spacer()
             
-            ProductDetailButtonView()
+            ProductDetailButtonView {
+                onButtonPress()
+            }
+        }
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Chef Delivery"),
+                  message: Text("Pedido enviado com sucesso"),
+                  dismissButton: .default(Text("OK"), action: {
+                presentationMode.wrappedValue.dismiss()
+            }))
+        }
+    }
+    
+    func onButtonPress() {
+        Task {
+            await confirmOrder()
+        }
+    }
+    
+    
+    func confirmOrder() async {
+        do {
+            let result = try await service.confirmOrder(product: product)
+            switch result {
+            case .success(let message):
+                showAlert = true
+            case .failure(let error):
+                print(error.localizedDescription)
+                break
+            }
+        } catch {
+            print(error.localizedDescription)
         }
     }
 }
@@ -37,13 +72,16 @@ struct ProductDetailView_Previews: PreviewProvider {
 }
 
 struct ProductDetailButtonView: View {
+    
+    var onButtonPress: () -> Void
+    
     var body: some View {
         Button {
-            print("Botão pressionado")
+            onButtonPress()
         } label: {
             HStack {
                 Image(systemName: "cart")
-                Text("Adicionar ao carrinho")
+                Text("enviar pedido")
             }
             .padding(.horizontal, 32)
             .padding(.vertical, 16)

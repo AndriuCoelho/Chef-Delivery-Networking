@@ -60,6 +60,10 @@ struct ContentView: View {
             print(error.localizedDescription)
             self.isLoading = false
         }
+        
+        service.fetchDataWithAlamofire { response, error in
+            print(response)
+        }
     }
 }
 
